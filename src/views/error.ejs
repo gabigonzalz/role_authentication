@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error <%= status %></title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script>
+        // Redirect after 5 seconds
+        setTimeout(() => {
+            window.location.href = '<%= redirectTo %>'; // Redirect to the specified page
+        }, 5000);
+    </script>
+</head>
+<body class="bg-blue-200 text-gray-800 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md text-center">
+        <h1 class="text-3xl font-extrabold text-blue-600 mb-4">Error <%= status %></h1>
+        <p class="text-lg text-gray-600 mb-4"><%= message %></p>
+        <p class="text-gray-500 mb-4">You will be redirected in 5 seconds...</p>
+        <a href="<%= redirectTo %>" class="text-blue-600 underline hover:text-blue-700 transition duration-300">Click here if you are not automatically redirected.</a>
+    </div>
+</body>
+</html>

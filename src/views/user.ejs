@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Profile</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-200 text-gray-800 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-lg">
+        <h1 class="text-3xl font-extrabold text-blue-600 mb-6 text-center"><%= name %></h1> <!-- Display user name dynamically -->
+
+        <div class="profile-info mb-6">
+            <div class="mb-2">
+                <span class="font-semibold">Username:</span> <span><%= username %></span> <!-- Display username -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Birth Date:</span> <span><%= birth %></span> <!-- Display birth date -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Age:</span> <span><%= age %></span> <!-- Display age -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Phone:</span> <span><%= phone %></span> <!-- Display phone number -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Country:</span> <span><%= country %></span> <!-- Display country -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Passport:</span> <span><%= passport %></span> <!-- Display passport -->
+            </div>
+            <div class="mb-2">
+                <span class="font-semibold">Last Visit:</span> <span><%= last_visit %></span> <!-- Display last visit -->
+            </div>
+        </div>
+
+        <div class="space-y-4">
+            <button id="logoutButton" onclick="logoutUser()" class="bg-red-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:bg-red-700 hover:scale-105 active:scale-95 w-full">
+                LOG OUT
+            </button> <!-- Button to log out -->
+            <button id="admin" onclick="redirectToAdmin()" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105 active:scale-95 w-full">
+                Go to Admin
+            </button> <!-- Button to redirect to admin -->
+        </div>
+    </div>
+
+<script>
+// Utility function to handle authenticated requests
+const authenticatedFetch = async (url, options = {}) => {
+    const token = localStorage.getItem('jwt_token'); // Get the JWT token from local storage
+    const csrfToken = getCookie('csrf_token'); // Get the CSRF token from the cookies
+    console.log('CSRF Token HTML user:', csrfToken);
+    const headers = options.headers || {};
+
+    // If the token exists, add it to the Authorization header
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // If the CSRF token exists, add it to the headers
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    // Ensure headers are correctly passed in the fetch options
+    const fetchOptions = {
+        ...options,
+        headers,
+        credentials: 'include'  // Ensures cookies are sent if available
+    };
+
+    // Proceed with the request
+    return await fetch(url, fetchOptions);
+};
+
+// Function to get a cookie by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift(); // Return the cookie value
+}
+
+// Function to redirect to the admin page
+async function redirectToAdmin() {
+    try {
+        const response = await authenticatedFetch('/admin', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+
+        if (response.ok) {
+            // Redirect to the admin page if the response is successful
+            window.location.href = '/admin';
+        } else {
+            const errorData = await response.json();
+            alert(errorData.message || 'Failed to access admin page'); // Show error message
+        }
+    } catch (error) {
+        console.error('Error during redirect to admin:', error);
+        alert('Something went wrong while accessing the admin page');
+    }
+}
+
+// Function to handle user logout
+async function logoutUser() {
+    try {
+        const response = await authenticatedFetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Show success message
+            localStorage.removeItem('jwt_token'); // Clear the JWT token from localStorage
+            window.location.href = '/'; // Redirect to home
+        } else {
+            alert(result.message || 'Logout failed'); // Show alert on failure
+        }
+    } catch (error) {
+        console.error('Error during logout:', error); // Log any errors
+        alert('Something went wrong during logout'); // Show alert for errors
+    }
+}
+</script>
+</html>

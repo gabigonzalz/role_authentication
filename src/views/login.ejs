@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login Form</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-200 text-gray-800 flex items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md">
+        <h1 class="text-3xl font-extrabold text-blue-600 mb-4 text-center">Login Form</h1>
+        <p class="text-center text-gray-600 mb-6">Trust us with your data!</p>
+
+        <form id="login-form" class="space-y-4">
+            <div>
+                <label for="username" class="block text-sm font-medium text-gray-700">Username</label>
+                <input type="text" id="username" name="username" placeholder="Your username" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div>
+                <label for="password" class="block text-sm font-medium text-gray-700">Password</label>
+                <input type="password" id="password" name="password" placeholder="******" required class="mt-1 block w-full border border-gray-300 rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+            </div>
+            <div class="flex space-x-4 mt-4">
+                <button type="button" id="jwt-login" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105 active:scale-95 w-full">
+                    JWT Log in
+                </button>
+                <button type="button" id="session-login" class="bg-blue-600 text-white font-bold py-2 px-4 rounded-full transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105 active:scale-95 w-full">
+                    Session Log in
+                </button>
+            </div>
+        </form>
+
+        <h2 class="text-lg font-semibold text-blue-600 mt-6">What is the difference?</h2>
+        <p class="text-gray-600">
+            In a JWT login, you will only be able to use your account for the next 3 hours or until you close your browser. 
+            Whereas for the session login, you'll stay logged in until you click the logout button!
+        </p>
+    </div>
+
+<script>
+// Get references to the form and buttons
+const form = document.getElementById('login-form');
+const jwtButton = document.getElementById('jwt-login');
+const sessionButton = document.getElementById('session-login');
+
+// Function to handle login
+const handleLogin = (action) => {
+    const username = document.getElementById('username').value; // Get the username input value
+    const password = document.getElementById('password').value; // Get the password input value
+
+    // Get CSRF token from the cookie
+    const csrfToken = getCookie('csrf_token'); // This will work since we set it as a regular cookie
+    fetch(action, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken, // Include CSRF token in headers
+        },
+        body: JSON.stringify({ username, password }), // Send username and password as JSON
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.json();
+    })
+    .then(data => {
+        if (data.token) {
+            // Store the token in local storage
+            localStorage.setItem('jwt_token', data.token);
+            // Redirect to the user page
+            window.location.href = '/user';
+        } else {
+            // Handle login failure
+            console.error(data.message);
+            alert(data.message || 'Login failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('An error occurred during login.'); // User-friendly error message
+    });
+};
+
+// Function to get a cookie by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift(); // Return the cookie value
+}
+
+// Add click event listeners to each button to call the login function
+jwtButton.addEventListener('click', (event) => {
+    handleLogin('/login_token');  // Call login with JWT route
+});
+
+sessionButton.addEventListener('click', (event) => {
+    handleLogin('/login_cookie');  // Call login with session route
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
+<body class="bg-blue-200 text-gray-800 flex flex-col items-center justify-center min-h-screen p-4">
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mb-6">
+        <h1 class="text-2xl font-extrabold text-blue-600 mb-4">Users List</h1>
+        <ul class="space-y-2">
+            <% users.forEach(user => { %>
+                <li class="flex justify-between items-center">
+                    <span><%= user.username %></span>
+                    <button class="bg-red-600 text-white font-bold py-1 px-4 rounded transition duration-300 ease-in-out transform hover:bg-red-700 hover:scale-105 active:scale-95" onclick="deleteUser('<%= user._id %>')">
+                        Delete
+                    </button>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+
+    <div class="bg-white shadow-lg rounded-lg p-8 w-full max-w-md mb-6">
+        <h1 class="text-2xl font-extrabold text-blue-600 mb-4">Login Attempts</h1>
+        <ul class="space-y-2">
+            <% loginAttempts.forEach(attempt => { %>
+                <li class="flex justify-between items-center">
+                    <span><%= attempt.username %></span>
+                    <button class="bg-red-600 text-white font-bold py-1 px-4 rounded transition duration-300 ease-in-out transform hover:bg-red-700 hover:scale-105 active:scale-95" onclick="deleteLoginAttempt('<%= attempt._id %>')">
+                        Delete
+                    </button>
+                </li>
+            <% }); %>
+        </ul>
+    </div>
+
+    <div>
+        <button id="logoutButton" class="bg-blue-600 text-white font-bold py-2 px-6 rounded-full transition duration-300 ease-in-out transform hover:bg-blue-700 hover:scale-105 active:scale-95" onclick="logoutUser()">
+            LOG OUT
+        </button>
+    </div>
+
+<script>
+// Utility function to handle authenticated requests
+const authenticatedFetch = async (url, options = {}) => {
+    const token = localStorage.getItem('jwt_token'); // Get the JWT token from local storage
+    const csrfToken = getCookie('csrf_token'); // Get the CSRF token from the cookies
+    const headers = options.headers || {};
+
+    // If the token exists, add it to the Authorization header
+    if (token) {
+        headers['Authorization'] = `Bearer ${token}`;
+    }
+
+    // If the CSRF token exists, add it to the headers
+    if (csrfToken) {
+        headers['X-CSRF-Token'] = csrfToken;
+    }
+
+    // Ensure headers are correctly passed in the fetch options
+    const fetchOptions = {
+        ...options,
+        headers,
+        credentials: 'include'  // Ensures cookies are sent if available
+    };
+
+    // Proceed with the request
+    return await fetch(url, fetchOptions);
+};
+
+// Function to get a cookie by name
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift(); // Return the cookie value
+}
+
+// Function to delete a user
+function deleteUser(userId) {
+    authenticatedFetch(`/admin/delete/user/${userId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'User deleted successfully') {
+            location.reload(); // Reload the page if deletion is successful
+        } else {
+            alert(data.message); // Show an alert with the error message
+        }
+    })
+    .catch(err => console.error('Error deleting user:', err)); // Log any errors
+}
+
+// Function to delete a login attempt
+function deleteLoginAttempt(attemptId) {
+    authenticatedFetch(`/admin/delete/login/${attemptId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'Login attempt deleted successfully') {
+            location.reload(); // Reload the page if deletion is successful
+        } else {
+            alert(data.message); // Show an alert with the error message
+        }
+    })
+    .catch(err => console.error('Error deleting login attempt:', err)); // Log any errors
+}
+
+// Function to handle user logout
+async function logoutUser() {
+    try {
+        const response = await authenticatedFetch('/logout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            alert(result.message); // Show success message
+            localStorage.removeItem('jwt_token'); // Clear the JWT token from localStorage
+            window.location.href = '/'; // Redirect to home
+        } else {
+            alert(result.message || 'Logout failed'); // Show alert on failure
+        }
+    } catch (error) {
+        console.error('Error during logout:', error); // Log any errors
+        alert('Something went wrong during logout'); // Show alert for errors
+    }
+}
+</script>
+</body>
+</html>
