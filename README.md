@@ -52,7 +52,7 @@ Create a ***.env*** file in the root directory and configure the following envir
 ```bash
 PORT=3000
 JWT_SECRET=your_jwt_secret_key
-``
+```
 4. Run the application:
 ```bash
 npm run dev
